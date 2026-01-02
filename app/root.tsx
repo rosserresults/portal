@@ -7,13 +7,7 @@ import {
   ScrollRestoration,
 } from "react-router";
 
-import {
-  ClerkProvider,
-  SignedIn,
-  SignedOut,
-  UserButton,
-  SignInButton,
-} from "@clerk/react-router";
+import { ClerkProvider } from "@clerk/react-router";
 
 import type { Route } from "./+types/root";
 import "./app.css";
@@ -59,16 +53,6 @@ export default function App({ loaderData }: Route.ComponentProps) {
   return (
     // Pass the `loaderData` to the `<ClerkProvider>` component
     <ClerkProvider loaderData={loaderData}>
-      <header className="flex items-center justify-center py-8 px-4">
-        {/* Show the sign-in button when the user is signed out */}
-        <SignedOut>
-          <SignInButton />
-        </SignedOut>
-        {/* Show the user button when the user is signed in */}
-        <SignedIn>
-          <UserButton />
-        </SignedIn>
-      </header>
       <Outlet />
     </ClerkProvider>
   );
