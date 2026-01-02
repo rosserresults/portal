@@ -3,7 +3,6 @@ import { Link } from "react-router"
 import { 
   Download, 
   Trash2, 
-  Edit, 
   Image as ImageIcon, 
   FileText, 
   Video, 

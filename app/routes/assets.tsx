@@ -24,6 +24,7 @@ import {
   getAssets,
   getFolders,
   getAssetDownloadUrl,
+  getAssetById,
 } from "~/lib/assets"
 import { getUserOrgIds } from "~/lib/clerk-helpers"
 import type { Route } from "./+types/assets"
@@ -62,7 +63,6 @@ export async function action(args: Route.ActionArgs) {
       return { error: "Asset ID is required" }
     }
     try {
-      const { getAssetById } = await import("~/lib/assets")
       // getAssetById now verifies org access internally
       const asset = await getAssetById(assetId, orgId)
       
