@@ -1,21 +1,32 @@
 import { SignedIn, SignedOut, RedirectToSignIn } from "@clerk/react-router"
 import { AppSidebar } from "~/components/app-sidebar"
-import {
-  Breadcrumb,
-  BreadcrumbItem,
-  BreadcrumbLink,
-  BreadcrumbList,
-  BreadcrumbPage,
-  BreadcrumbSeparator,
-} from "~/components/ui/breadcrumb"
 import { Separator } from "~/components/ui/separator"
 import {
   SidebarInset,
   SidebarProvider,
   SidebarTrigger,
 } from "~/components/ui/sidebar"
+import { AppCard } from "~/components/app-card"
+import { getAppsForUser } from "~/lib/apps"
+import { getUserId, getUserOrgIds } from "~/lib/clerk-helpers"
+import type { Route } from "./+types/dashboard"
 
-export default function Page() {
+export async function loader(args: Route.LoaderArgs) {
+  const userId = await getUserId(args)
+  
+  if (!userId) {
+    return { apps: [] }
+  }
+
+  const orgIds = await getUserOrgIds(args)
+  const apps = await getAppsForUser(userId, orgIds)
+  
+  return { apps }
+}
+
+export default function DashboardPage({ loaderData }: Route.ComponentProps) {
+  const { apps } = loaderData
+
   return (
     <>
       <SignedIn>
@@ -29,28 +40,30 @@ export default function Page() {
                   orientation="vertical"
                   className="mr-2 data-[orientation=vertical]:h-4"
                 />
-                <Breadcrumb>
-                  <BreadcrumbList>
-                    <BreadcrumbItem className="hidden md:block">
-                      <BreadcrumbLink href="#">
-                        Building Your Application
-                      </BreadcrumbLink>
-                    </BreadcrumbItem>
-                    <BreadcrumbSeparator className="hidden md:block" />
-                    <BreadcrumbItem>
-                      <BreadcrumbPage>Data Fetching</BreadcrumbPage>
-                    </BreadcrumbItem>
-                  </BreadcrumbList>
-                </Breadcrumb>
+                <h1 className="text-lg font-semibold">Dashboard</h1>
               </div>
             </header>
             <div className="flex flex-1 flex-col gap-4 p-4 pt-0">
-              <div className="grid auto-rows-min gap-4 md:grid-cols-3">
-                <div className="bg-muted/50 aspect-video rounded-xl" />
-                <div className="bg-muted/50 aspect-video rounded-xl" />
-                <div className="bg-muted/50 aspect-video rounded-xl" />
+              <div>
+                <h2 className="text-2xl font-bold">Apps</h2>
+                <p className="text-muted-foreground">
+                  Access your available applications
+                </p>
               </div>
-              <div className="bg-muted/50 min-h-screen flex-1 rounded-xl md:min-h-min" />
+
+              {apps.length === 0 ? (
+                <div className="rounded-lg border border-dashed p-12 text-center">
+                  <p className="text-muted-foreground">
+                    No apps available. Contact your administrator to add apps.
+                  </p>
+                </div>
+              ) : (
+                <div className="grid auto-rows-min gap-4 md:grid-cols-2 lg:grid-cols-3">
+                  {apps.map((app) => (
+                    <AppCard key={app.id} app={app} />
+                  ))}
+                </div>
+              )}
             </div>
           </SidebarInset>
         </SidebarProvider>
