@@ -11,9 +11,10 @@ interface AppFormProps {
   app?: AppWithOrgs
   onSubmit?: (formData: FormData) => void
   isSubmitting?: boolean
+  organizations?: Array<{ id: string; name: string }>
 }
 
-export function AppForm({ app, onSubmit, isSubmitting = false }: AppFormProps) {
+export function AppForm({ app, onSubmit, isSubmitting = false, organizations }: AppFormProps) {
   const [isPublic, setIsPublic] = useState(app?.is_public ?? false)
   const [selectedOrgIds, setSelectedOrgIds] = useState<string[]>(
     app?.organizations || []
@@ -163,6 +164,7 @@ export function AppForm({ app, onSubmit, isSubmitting = false }: AppFormProps) {
             selectedOrgIds={selectedOrgIds}
             onSelectionChange={setSelectedOrgIds}
             disabled={isSubmitting}
+            organizations={organizations}
           />
         )}
       </div>

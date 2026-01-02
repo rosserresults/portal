@@ -9,12 +9,12 @@ import {
 } from "~/components/ui/sidebar"
 import { Separator } from "~/components/ui/separator"
 import { Button } from "~/components/ui/button"
-import { AppList } from "~/components/admin/app-list"
+import { TaskList } from "~/components/admin/task-list"
 import { Plus } from "lucide-react"
 import { Link, Form } from "react-router"
-import { getAllApps, deleteApp } from "~/lib/apps"
-import { isAdmin, getUserId } from "~/lib/clerk-helpers"
-import type { Route } from "./+types/admin.apps"
+import { getTasksForCurrentOrg, deleteTask } from "~/lib/tasks"
+import { isAdmin, getOrgId } from "~/lib/clerk-helpers"
+import type { Route } from "./+types/admin.tasks"
 
 export async function loader(args: Route.LoaderArgs) {
   const admin = await isAdmin(args)
@@ -23,8 +23,13 @@ export async function loader(args: Route.LoaderArgs) {
     throw new Response("Unauthorized", { status: 403 })
   }
 
-  const apps = await getAllApps()
-  return { apps }
+  const orgId = await getOrgId(args)
+  if (!orgId) {
+    throw new Response("Organization required", { status: 400 })
+  }
+
+  const tasks = await getTasksForCurrentOrg(orgId)
+  return { tasks }
 }
 
 export async function action(args: Route.ActionArgs) {
@@ -38,27 +43,32 @@ export async function action(args: Route.ActionArgs) {
   const intent = formData.get("intent")
 
   if (intent === "delete") {
-    const appId = formData.get("appId") as string
-    if (!appId) {
-      return { error: "App ID is required" }
+    const taskId = formData.get("taskId") as string
+    if (!taskId) {
+      return { error: "Task ID is required" }
+    }
+
+    const orgId = await getOrgId(args)
+    if (!orgId) {
+      return { error: "Organization required" }
     }
 
     try {
-      await deleteApp(appId)
+      await deleteTask(taskId, orgId)
       return { success: true }
     } catch (error) {
-      return { error: error instanceof Error ? error.message : "Failed to delete app" }
+      return { error: error instanceof Error ? error.message : "Failed to delete task" }
     }
   }
 
   return { error: "Invalid action" }
 }
 
-export default function AdminAppsPage({ loaderData, actionData, navigation }: Route.ComponentProps) {
-  const { apps } = loaderData
+export default function AdminTasksPage({ loaderData, actionData, navigation }: Route.ComponentProps) {
+  const { tasks } = loaderData
   const nav = useNavigation()
   const isDeleting = nav.formData?.get("intent") === "delete" 
-    ? nav.formData.get("appId") as string 
+    ? nav.formData.get("taskId") as string 
     : null
 
   return (
@@ -74,21 +84,21 @@ export default function AdminAppsPage({ loaderData, actionData, navigation }: Ro
                   orientation="vertical"
                   className="mr-2 data-[orientation=vertical]:h-4"
                 />
-                <h1 className="text-lg font-semibold">Manage Apps</h1>
+                <h1 className="text-lg font-semibold">Manage Tasks</h1>
               </div>
             </header>
             <div className="page-content flex flex-1 flex-col gap-4 p-4 pt-0">
               <div className="flex items-center justify-between">
                 <div>
-                  <h2 className="text-2xl font-bold">Apps</h2>
+                  <h2 className="text-2xl font-bold">Tasks</h2>
                   <p className="text-muted-foreground">
-                    Manage apps that users can access
+                    Manage tasks for your organization
                   </p>
                 </div>
                 <Button asChild>
-                  <Link to="/dashboard/admin/apps/new">
+                  <Link to="/dashboard/admin/tasks/new">
                     <Plus className="h-4 w-4" />
-                    Add App
+                    Add Task
                   </Link>
                 </Button>
               </div>
@@ -101,12 +111,12 @@ export default function AdminAppsPage({ loaderData, actionData, navigation }: Ro
 
               {actionData?.success && (
                 <div className="rounded-lg border border-green-500 bg-green-500/10 p-4 text-sm text-green-600 dark:text-green-400">
-                  App deleted successfully
+                  Task deleted successfully
                 </div>
               )}
 
-              <AppList
-                apps={apps}
+              <TaskList
+                tasks={tasks}
                 isDeleting={isDeleting}
               />
             </div>

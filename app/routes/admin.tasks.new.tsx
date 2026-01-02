@@ -7,11 +7,11 @@ import {
   SidebarTrigger,
 } from "~/components/ui/sidebar"
 import { Separator } from "~/components/ui/separator"
-import { AppForm } from "~/components/admin/app-form"
+import { TaskForm } from "~/components/admin/task-form"
 import { Link } from "react-router"
-import { getAppById, updateApp } from "~/lib/apps"
-import { isAdmin, getUserId, getAllOrganizations } from "~/lib/clerk-helpers"
-import type { Route } from "./+types/admin.apps.$id"
+import { createTask } from "~/lib/tasks"
+import { isAdmin, getUserId, getOrgId } from "~/lib/clerk-helpers"
+import type { Route } from "./+types/admin.tasks.new"
 
 export async function loader(args: Route.LoaderArgs) {
   const admin = await isAdmin(args)
@@ -20,12 +20,7 @@ export async function loader(args: Route.LoaderArgs) {
     throw new Response("Unauthorized", { status: 403 })
   }
 
-  const [app, organizations] = await Promise.all([
-    getAppById(args.params.id),
-    getAllOrganizations(),
-  ])
-  
-  return { app, organizations }
+  return null
 }
 
 export async function action(args: Route.ActionArgs) {
@@ -40,52 +35,38 @@ export async function action(args: Route.ActionArgs) {
     throw new Response("Unauthorized", { status: 401 })
   }
 
-  const formData = await args.request.formData()
-  const name = formData.get("name") as string
-  const description = formData.get("description") as string
-  const url = formData.get("url") as string
-  const isPublic = formData.get("is_public") === "true"
-  const organizationIdsJson = formData.get("organization_ids") as string
-  const iconFile = formData.get("icon") as File | null
-
-  if (!name || !url) {
-    return { error: "Name and URL are required" }
+  const orgId = await getOrgId(args)
+  if (!orgId) {
+    throw new Response("Organization required", { status: 400 })
   }
 
-  let organizationIds: string[] = []
-  if (!isPublic && organizationIdsJson) {
-    try {
-      organizationIds = JSON.parse(organizationIdsJson)
-    } catch {
-      return { error: "Invalid organization IDs format" }
-    }
+  const formData = await args.request.formData()
+  const title = formData.get("title") as string
+  const description = formData.get("description") as string
+
+  if (!title) {
+    return { error: "Title is required" }
   }
 
   try {
-    await updateApp(
-      args.params.id,
+    await createTask(
       {
-        name,
+        title,
         description: description || undefined,
-        url,
-        is_public: isPublic,
-        organization_ids: organizationIds,
       },
-      iconFile && iconFile.size > 0 ? iconFile : null,
-      userId
+      userId,
+      orgId
     )
 
-    return redirect(`/dashboard/admin/apps`)
+    return redirect(`/dashboard/admin/tasks`)
   } catch (error) {
     return {
-      error: error instanceof Error ? error.message : "Failed to update app",
+      error: error instanceof Error ? error.message : "Failed to create task",
     }
   }
 }
 
-export default function EditAppPage({ loaderData, actionData }: Route.ComponentProps) {
-  const { app, organizations } = loaderData
-
+export default function NewTaskPage({ actionData }: Route.ComponentProps) {
   return (
     <>
       <SignedIn>
@@ -99,18 +80,18 @@ export default function EditAppPage({ loaderData, actionData }: Route.ComponentP
                   orientation="vertical"
                   className="mr-2 data-[orientation=vertical]:h-4"
                 />
-                <Link to="/dashboard/admin/apps" className="text-muted-foreground hover:text-foreground">
-                  Manage Apps
+                <Link to="/dashboard/admin/tasks" className="text-muted-foreground hover:text-foreground">
+                  Manage Tasks
                 </Link>
                 <span className="text-muted-foreground">/</span>
-                <h1 className="text-lg font-semibold">Edit App</h1>
+                <h1 className="text-lg font-semibold">New Task</h1>
               </div>
             </header>
             <div className="flex flex-1 flex-col gap-4 p-4 pt-0">
               <div>
-                <h2 className="text-2xl font-bold">Edit App</h2>
+                <h2 className="text-2xl font-bold">Create New Task</h2>
                 <p className="text-muted-foreground">
-                  Update app details and access settings
+                  Add a new task for your organization
                 </p>
               </div>
 
@@ -121,7 +102,7 @@ export default function EditAppPage({ loaderData, actionData }: Route.ComponentP
               )}
 
               <div className="rounded-lg border bg-card p-6">
-                <AppForm app={app} organizations={organizations} />
+                <TaskForm />
               </div>
             </div>
           </SidebarInset>

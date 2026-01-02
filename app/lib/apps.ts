@@ -224,9 +224,9 @@ export async function updateApp(
   iconFile: File | null,
   userId: string
 ): Promise<AppWithOrgs> {
-  // Get existing app
+  // Get existing app (use admin client to bypass RLS)
   const existingApp = await fetchOne<App>(
-    supabase.from("apps").select("*").eq("id", appId).single()
+    supabaseAdmin.from("apps").select("*").eq("id", appId).single()
   );
 
   // Upload new icon if provided
@@ -247,14 +247,23 @@ export async function updateApp(
   if (appData.is_public !== undefined) updateData.is_public = appData.is_public;
   if (iconUrl !== null) updateData.icon_url = iconUrl;
 
-  const app = await updateOne<App>(
-    supabaseAdmin
-      .from("apps")
-      .update(updateData)
-      .eq("id", appId)
-      .select()
-      .single()
-  );
+  // Update the app and return the updated record
+  const { data: updatedApp, error: updateError } = await supabaseAdmin
+    .from("apps")
+    .update(updateData)
+    .eq("id", appId)
+    .select()
+    .single();
+
+  if (updateError) {
+    throw new Error(`Failed to update app: ${updateError.message}`);
+  }
+
+  if (!updatedApp) {
+    throw new Error("App not found or update returned no data");
+  }
+
+  const app = updatedApp;
 
   // Update organization associations if provided
   if (appData.organization_ids !== undefined) {
@@ -278,8 +287,8 @@ export async function updateApp(
     }
   }
 
-  // Fetch updated organizations
-  const { data: orgData } = await supabase
+  // Fetch updated organizations (use admin client to bypass RLS)
+  const { data: orgData } = await supabaseAdmin
     .from("app_organizations")
     .select("organization_id")
     .eq("app_id", app.id);
@@ -294,15 +303,20 @@ export async function updateApp(
  * Delete an app
  */
 export async function deleteApp(appId: string): Promise<void> {
-  // Get app to delete icon
+  // Get app to delete icon (use admin client to bypass RLS)
   const app = await fetchOne<App>(
-    supabase.from("apps").select("*").eq("id", appId).single()
+    supabaseAdmin.from("apps").select("*").eq("id", appId).single()
   );
 
   // Delete app (cascade will delete app_organizations) - use admin client to bypass RLS
-  await deleteOne(
-    supabaseAdmin.from("apps").delete().eq("id", appId).select().single()
-  );
+  const { error: deleteError } = await supabaseAdmin
+    .from("apps")
+    .delete()
+    .eq("id", appId);
+
+  if (deleteError) {
+    throw new Error(`Failed to delete app: ${deleteError.message}`);
+  }
 
   // Delete icon if exists
   if (app.icon_url) {

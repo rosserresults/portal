@@ -1,4 +1,5 @@
 import { getAuth } from "@clerk/react-router/server";
+import { createClerkClient } from "@clerk/backend";
 
 /**
  * Check if the current user is an admin in their current organization
@@ -46,4 +47,37 @@ export async function getUserOrgIds(loaderArgs: { request: Request }): Promise<s
 export async function getUserId(loaderArgs: { request: Request }): Promise<string | null> {
   const { userId } = await getAuth(loaderArgs);
   return userId;
+}
+
+/**
+ * Get the current organization ID
+ */
+export async function getOrgId(loaderArgs: { request: Request }): Promise<string | null> {
+  const { orgId } = await getAuth(loaderArgs);
+  return orgId;
+}
+
+/**
+ * Get all organizations from Clerk
+ * This requires CLERK_SECRET_KEY to be set in environment variables
+ */
+export async function getAllOrganizations(): Promise<Array<{ id: string; name: string }>> {
+  try {
+    const client = createClerkClient({
+      secretKey: process.env.CLERK_SECRET_KEY,
+    });
+    
+    const organizations = await client.organizations.getOrganizationList({
+      limit: 100, // Adjust as needed
+    });
+    
+    return organizations.data.map((org) => ({
+      id: org.id,
+      name: org.name,
+    }));
+  } catch (error) {
+    console.error("Failed to fetch organizations:", error);
+    // Return empty array on error - component will handle gracefully
+    return [];
+  }
 }

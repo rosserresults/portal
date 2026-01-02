@@ -10,7 +10,7 @@ import { Separator } from "~/components/ui/separator"
 import { AppForm } from "~/components/admin/app-form"
 import { Link } from "react-router"
 import { createApp } from "~/lib/apps"
-import { isAdmin, getUserId } from "~/lib/clerk-helpers"
+import { isAdmin, getUserId, getAllOrganizations } from "~/lib/clerk-helpers"
 import type { Route } from "./+types/admin.apps.new"
 
 export async function loader(args: Route.LoaderArgs) {
@@ -20,7 +20,9 @@ export async function loader(args: Route.LoaderArgs) {
     throw new Response("Unauthorized", { status: 403 })
   }
 
-  return null
+  const organizations = await getAllOrganizations()
+
+  return { organizations }
 }
 
 export async function action(args: Route.ActionArgs) {
@@ -77,7 +79,9 @@ export async function action(args: Route.ActionArgs) {
   }
 }
 
-export default function NewAppPage({ actionData }: Route.ComponentProps) {
+export default function NewAppPage({ loaderData, actionData }: Route.ComponentProps) {
+  const { organizations } = loaderData
+
   return (
     <>
       <SignedIn>
@@ -113,7 +117,7 @@ export default function NewAppPage({ actionData }: Route.ComponentProps) {
               )}
 
               <div className="rounded-lg border bg-card p-6">
-                <AppForm />
+                <AppForm organizations={organizations} />
               </div>
             </div>
           </SidebarInset>

@@ -1,34 +1,20 @@
-import { useOrganizationList } from "@clerk/react-router"
 import { Checkbox } from "~/components/ui/checkbox"
 import { Label } from "~/components/ui/label"
-import { Skeleton } from "~/components/ui/skeleton"
 
 interface AppOrgSelectorProps {
   selectedOrgIds: string[]
   onSelectionChange: (orgIds: string[]) => void
   disabled?: boolean
+  organizations?: Array<{ id: string; name: string }>
 }
 
 export function AppOrgSelector({
   selectedOrgIds,
   onSelectionChange,
   disabled = false,
+  organizations = [],
 }: AppOrgSelectorProps) {
-  const { organizationList, isLoaded } = useOrganizationList()
-
-  if (!isLoaded) {
-    return (
-      <div className="space-y-2">
-        <Skeleton className="h-4 w-32" />
-        <div className="space-y-2">
-          <Skeleton className="h-8 w-full" />
-          <Skeleton className="h-8 w-full" />
-        </div>
-      </div>
-    )
-  }
-
-  if (!organizationList || organizationList.length === 0) {
+  if (!organizations || organizations.length === 0) {
     return (
       <div className="rounded-lg border border-dashed p-4 text-center text-sm text-muted-foreground">
         No organizations available. Create an organization in Clerk to assign apps to it.
@@ -48,19 +34,19 @@ export function AppOrgSelector({
     <div className="space-y-3">
       <Label>Organizations</Label>
       <div className="space-y-2 rounded-lg border p-3">
-        {organizationList.map(({ organization }) => (
-          <div key={organization.id} className="flex items-center space-x-2">
+        {organizations.map((org) => (
+          <div key={org.id} className="flex items-center space-x-2">
             <Checkbox
-              id={`org-${organization.id}`}
-              checked={selectedOrgIds.includes(organization.id)}
-              onCheckedChange={() => handleOrgToggle(organization.id)}
+              id={`org-${org.id}`}
+              checked={selectedOrgIds.includes(org.id)}
+              onCheckedChange={() => handleOrgToggle(org.id)}
               disabled={disabled}
             />
             <Label
-              htmlFor={`org-${organization.id}`}
+              htmlFor={`org-${org.id}`}
               className="flex-1 cursor-pointer font-normal"
             >
-              {organization.name}
+              {org.name}
             </Label>
           </div>
         ))}

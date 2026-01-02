@@ -14,7 +14,7 @@ export function AppCard({ app, className }: AppCardProps) {
       target="_blank"
       rel="noopener noreferrer"
       className={cn(
-        "group relative flex flex-col gap-3 rounded-lg border bg-card p-6 transition-all hover:border-primary/50 hover:shadow-md",
+        "card-enter group relative flex flex-col gap-3 rounded-lg border bg-card p-6 transition-all hover:border-primary/50 hover:shadow-md hover:scale-[1.02] active:scale-[0.98]",
         className
       )}
     >

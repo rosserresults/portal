@@ -19,10 +19,11 @@ export function AppList({ apps, isDeleting }: AppListProps) {
 
   return (
     <div className="space-y-4">
-      {apps.map((app) => (
+      {apps.map((app, index) => (
         <div
           key={app.id}
-          className="flex items-center justify-between rounded-lg border p-4"
+          className="card-enter flex items-center justify-between rounded-lg border p-4 transition-all hover:shadow-md hover:border-primary/50"
+          style={{ animationDelay: `${index * 30}ms` }}
         >
           <div className="flex items-center gap-4 flex-1">
             {app.icon_url ? (
