@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { LayoutDashboard, Shield, Folder, CheckSquare } from "lucide-react"
+import { LayoutDashboard, Shield, Folder, CheckSquare, BookOpen } from "lucide-react"
 import { useOrganization } from "@clerk/react-router"
 import { Link, useLocation } from "react-router"
 
@@ -63,6 +63,14 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                 </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>
+            <SidebarMenuItem>
+              <SidebarMenuButton asChild tooltip="Learning" isActive={location.pathname.startsWith("/dashboard/learning")}>
+                <Link to="/dashboard/learning">
+                  <BookOpen />
+                  <span>Learning</span>
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
           </SidebarMenu>
         </SidebarGroup>
         {isAdmin && (
@@ -90,6 +98,14 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                   <Link to="/dashboard/admin/tasks">
                     <CheckSquare />
                     <span>Manage Tasks</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild tooltip="Manage Topics" isActive={location.pathname.startsWith("/dashboard/admin/topics")}>
+                  <Link to="/dashboard/admin/topics">
+                    <BookOpen />
+                    <span>Manage Topics</span>
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
