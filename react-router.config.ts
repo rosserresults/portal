@@ -10,8 +10,9 @@ export default {
   future: {
     v8_middleware: true,
   },
-  getLoadContext() {
+  getLoadContext(request: Request) {
     // When middleware is enabled, getLoadContext must return a RouterContextProvider
+    // Accept request parameter in case Vercel preset passes it
     return new RouterContextProvider();
   },
 } satisfies Config;
